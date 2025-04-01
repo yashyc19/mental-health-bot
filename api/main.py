@@ -1,11 +1,20 @@
 # api/main.py
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from api.services.azure_service import AzureChatService
 from api.database import ChatDatabase
 from datetime import datetime
 
 app = FastAPI()
+
+# Allow CORS for all origins (replace with your frontend URL in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # Your React app's origin
+    allow_methods=["POST", "GET", "OPTIONS"],  # Include OPTIONS
+    allow_headers=["Content-Type"],
+)
 
 # Dependency injection for service
 def get_chat_service():
@@ -27,7 +36,11 @@ async def chat(
         )
         return {"response": response}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Log the error (e.g., using logging.error(e))
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Internal server error", "message": str(e)}
+        )
 
 @app.get("/history/{session_id}")
 async def get_history(
