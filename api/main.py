@@ -11,9 +11,9 @@ app = FastAPI()
 # Allow CORS for all origins (replace with your frontend URL in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],  # Your React app's origin
-    allow_methods=["POST", "GET", "OPTIONS"],  # Include OPTIONS
-    allow_headers=["Content-Type"],
+    allow_origins=["*"],  # Your React app's origin
+    allow_methods=["*"],  # Include OPTIONS
+    allow_headers=["*"],
 )
 
 # Dependency injection for service
