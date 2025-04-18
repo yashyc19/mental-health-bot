@@ -1,9 +1,8 @@
 # api/main.py
+import os
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from api.services.azure_service import AzureChatService
-from api.database import ChatDatabase
 from datetime import datetime
 
 app = FastAPI()
@@ -18,7 +17,15 @@ app.add_middleware(
 
 # Dependency injection for service
 def get_chat_service():
-    return AzureChatService()
+    service_type = os.getenv("CHAT_SERVICE", "AzureChatService")  # Default to HFService
+    if service_type == "AzureChatService":
+        from api.services.azure_service import AzureChatService
+        return AzureChatService()
+    elif service_type == "HFService":
+        from temp.hf_service import HFService
+        return HFService()
+    else:
+        raise ValueError(f"Unsupported chat service: {service_type}")
 
 class ChatRequest(BaseModel):
     session_id: str
@@ -27,7 +34,7 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat(
     request: ChatRequest,
-    chat_service: AzureChatService = Depends(get_chat_service)
+    chat_service=Depends(get_chat_service)  # Use dynamic service
 ):
     try:
         response = chat_service.generate_response(
@@ -45,7 +52,7 @@ async def chat(
 @app.get("/history/{session_id}")
 async def get_history(
     session_id: str,
-    chat_service: AzureChatService = Depends(get_chat_service)
+    chat_service=Depends(get_chat_service)  # Use dynamic service
 ):
     try:
         # Get last 10 messages for session
@@ -55,7 +62,7 @@ async def get_history(
 
 @app.get("/sessions")
 async def get_sessions(
-    chat_service: AzureChatService = Depends(get_chat_service)
+    chat_service=Depends(get_chat_service)  # Use dynamic service
 ):
     try:
         # Get all sessions
